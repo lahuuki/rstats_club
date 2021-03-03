@@ -1,0 +1,106 @@
+---
+title: "Tidyverse & Reshaping Data"
+date: 2021-03-05
+author: "Louise Huuki"
+output: html_notebook
+---
+
+### What is the Tidyverse?
+The "Tidyverse" is a collection of 8 packages designed for data science, and 
+designed to work together. https://www.tidyverse.org/
+
+1. ggplot2 - plots data  
+2. tibble - "upgraded" data frame  
+3. tidyr - data transformations (make data tidy)  
+4. readr - import data in tidyverse friendly way  
+5. purrr - "upgraded" loops  
+6. dplyr - data manipulations (change data)  
+7. stringr - work with strings  
+8. forcats - work with factors  
+
+```{r}
+library(tidyverse)
+```
+
+## %>%
+* The "pipe" symbol
+* from magrittr package - but loaded by tidyverse
+* Strings together functions 
+  + makes your code more readable
+  + fewer intermediate objects
+  + helps eliminate parentheses mess
+  
+```{r}
+data <- runif(10)
+
+sqrt(mean(data^2))
+data^2 %>% mean() %>% sqrt()
+```
+  
+Table example
+```{r}
+
+diamonds %>% filter(cut  == "Ideal") %>%
+  group_by(color) %>%
+  summarize(mean_price = mean(price),
+            n = n()) %>%
+  arrange(-mean_price)
+
+```
+
+SE example
+```{r}
+library(DeconvoBuddies)
+library(SummarizedExperiment)
+
+rse_bulk_test
+
+pd <- as.data.frame(colData(rse_bulk_test))
+
+head(pd)
+
+table(pd$Sex, pd$Dx)
+
+pd %>% group_by(Sex, Dx) %>%
+  summarize(mean(Age))
+
+
+```
+
+
+
+## Reshaping
+
+### Long vs. Wide data
+
+#### Reshape2 vs. tidyr pivot functions
+
+* make longer: melt & pivot_longer
+* make wider: dcast & pivot_wider
+
+```{r}
+est_prop_long <- est_prop %>%
+  rownames_to_column("sample") %>%
+  pivot_longer(!sample, names_to = "cell_type", values_to = "prop")
+
+est_prop_long
+
+```
+
+```{r}
+est_prop_long %>% 
+  ggplot(aes(cell_type, prop)) +
+  geom_boxplot()
+
+```
+
+
+## Joins
+combine with Dx info from pd
+```{r}
+
+```
+
+
+
+
