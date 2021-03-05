@@ -22,13 +22,15 @@ designed to work together. https://www.tidyverse.org/
 library(tidyverse)
 ```
 
-## %>%
+### %>%
 * The "pipe" symbol
 * from magrittr package - but loaded by tidyverse
 * Strings together functions 
   + makes your code more readable
   + fewer intermediate objects
   + helps eliminate parentheses mess
+  
+https://twitter.com/andrewheiss/status/1359583543509348356
   
 ```{r}
 data <- runif(10)
@@ -37,18 +39,19 @@ sqrt(mean(data^2))
 data^2 %>% mean() %>% sqrt()
 ```
   
-Table example
+### dplyr tools
 ```{r}
 
 diamonds %>% filter(cut  == "Ideal") %>%
   group_by(color) %>%
   summarize(mean_price = mean(price),
-            n = n()) %>%
+            n = n(),
+            max_price = max(price)) %>%
   arrange(-mean_price)
 
 ```
 
-SE example
+#### SE example
 ```{r}
 library(DeconvoBuddies)
 library(SummarizedExperiment)
@@ -62,14 +65,18 @@ head(pd)
 table(pd$Sex, pd$Dx)
 
 pd %>% group_by(Sex, Dx) %>%
-  summarize(mean(Age))
+  summarize(mean_age = mean(Age),
+            n = n(),
+            min_age = min(Age)
+            ) %>%
+  # filter(Dx == "Case")  %>%
+  identity()
+
 
 
 ```
 
-
-
-## Reshaping
+## Reshaping 
 
 ### Long vs. Wide data
 
@@ -78,13 +85,21 @@ pd %>% group_by(Sex, Dx) %>%
 * make longer: melt & pivot_longer
 * make wider: dcast & pivot_wider
 
+#### Make Longer
+https://twitter.com/bmwiernik/status/1366426648921391105
+
 ```{r}
+library(reshape2)
+
+est_prop_melt <- est_prop %>%
+  rownames_to_column("sample") %>%
+  melt(id = "sample")
+
 est_prop_long <- est_prop %>%
   rownames_to_column("sample") %>%
   pivot_longer(!sample, names_to = "cell_type", values_to = "prop")
 
 est_prop_long
-
 ```
 
 ```{r}
@@ -94,13 +109,39 @@ est_prop_long %>%
 
 ```
 
-
-## Joins
-combine with Dx info from pd
+#### Make Wider
 ```{r}
+est_prop_long %>%
+  dcast(sample~cell_type)
+
+col <- "cell_type"
+
+est_prop_long %>%
+  pivot_wider(id_cols = sample, names_from = col, values_from = prop)
+```
+
+
+### Joins
+combine est_prop with Dx info from pd
+```{r}
+
+pd_prop <- pd %>% filter(Sex == "F") %>%
+  left_join(est_prop %>% rownames_to_column("sample"), by = c("RNum" = "sample"))
 
 ```
 
 
+#### rehsape with more complicated data
 
+```{r}
+(pd_prop_long <- pd_prop %>% pivot_longer(cols = starts_with("cell_"), names_to = "cell_type", values_to = "prop"))
+```
+
+```{r}
+pd_prop_long %>%
+  ggplot(aes(Age, prop, color = cell_type)) +
+  geom_point() +
+  facet_wrap(~cell_type) +
+  NULL
+```
 
